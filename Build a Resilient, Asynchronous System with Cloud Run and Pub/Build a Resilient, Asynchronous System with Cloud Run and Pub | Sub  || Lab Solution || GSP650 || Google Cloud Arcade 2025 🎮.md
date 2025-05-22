@@ -7,10 +7,9 @@
 ### ⚙️ Run the Following Commands in Cloud Shell
 
 
-```bash
+```
 # Create a Windows VM with RDP Access on Google Cloud
 
-```bash
 # Prompt user for region and zone
 read -p "Enter your region (e.g., us-central1): " REGION
 read -p "Enter your zone (e.g., us-central1-a): " ZONE
