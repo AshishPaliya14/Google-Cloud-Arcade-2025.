@@ -55,8 +55,6 @@ read -p "Enter your desired Windows username (e.g., admin): " WIN_USER
 echo "🔐 Setting/resetting Windows password for user '$WIN_USER'..."
 gcloud compute reset-windows-password $VM_NAME --zone $ZONE --user $WIN_USER
 
-# Final congratulatory message with styling
-
 echo -e "\e[41;97m🎉 Congratulations for completing the Lab! 🎉 \e[0m"
 
 echo "📺 Subscribe to the channel: https://www.youtube.com/channel/UChSkWopRk1ErP2i0k4aa0KQ"
