@@ -8,8 +8,6 @@
 
 
 ```
-#!/bin/bash
-
 set -e
 
 echo "Build a Resilient, Asynchronous System with Cloud Run and Pub / Sub"
@@ -271,8 +269,6 @@ gcloud pubsub subscriptions create sms-sub \
   --topic=new-lab-report \
   --push-endpoint=$SMS_URL \
   --push-auth-service-account=pubsub-invoker@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com
-
-# Final congratulatory message with styling
 
 echo -e "\e[41;97m🎉 Congratulations for completing the Lab! 🎉 \e[0m"
 
