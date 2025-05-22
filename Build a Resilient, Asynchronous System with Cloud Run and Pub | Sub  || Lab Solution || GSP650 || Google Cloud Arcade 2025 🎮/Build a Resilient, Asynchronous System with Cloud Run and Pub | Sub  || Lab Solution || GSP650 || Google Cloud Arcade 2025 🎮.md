@@ -8,56 +8,276 @@
 
 
 ```
-# Create a Windows VM with RDP Access on Google Cloud
+#!/bin/bash
 
-# Prompt user for region and zone
-read -p "Enter your region (e.g., us-central1): " REGION
-read -p "Enter your zone (e.g., us-central1-a): " ZONE
+set -e
 
-# Set variables
-VM_NAME="windows-vm"
-IMAGE_PROJECT="windows-cloud"
-IMAGE_FAMILY="windows-2022"
-MACHINE_TYPE="n1-standard-1"
+echo "Build a Resilient, Asynchronous System with Cloud Run and Pub / Sub"
 
-echo "Creating a Windows VM instance in $ZONE..."
+# Prompt user for project, region, zone
+read -p "Enter your Google Cloud Project ID: " PROJECT_ID
+read -p "Enter the region to deploy (e.g. us-central1): " REGION
+read -p "Enter the zone (if needed, else press Enter to skip): " ZONE
 
-# Create the VM
-gcloud compute instances create $VM_NAME \
-  --zone=$ZONE \
-  --machine-type=$MACHINE_TYPE \
-  --image-project=$IMAGE_PROJECT \
-  --image-family=$IMAGE_FAMILY \
-  --boot-disk-size=50GB
+export GOOGLE_CLOUD_PROJECT=$PROJECT_ID
 
-echo "Enabling RDP (port 3389) in default firewall rule..."
-gcloud compute firewall-rules create allow-rdp \
-  --allow tcp:3389 \
-  --source-ranges=0.0.0.0/0 \
-  --target-tags=rdp-access \
-  --description="Allow RDP access"
+echo ""
+echo "Using Project ID: $GOOGLE_CLOUD_PROJECT"
+echo "Using Region: $REGION"
+if [ -n "$ZONE" ]; then
+  echo "Using Zone: $ZONE"
+fi
+echo ""
 
-# Add network tag to VM
-echo "Adding 'rdp-access' network tag to the VM..."
-gcloud compute instances add-tags $VM_NAME \
-  --tags=rdp-access \
-  --zone=$ZONE
+# Set gcloud config project and compute region/zone
+gcloud config set project $GOOGLE_CLOUD_PROJECT
+gcloud config set run/region $REGION
+if [ -n "$ZONE" ]; then
+  gcloud config set compute/zone $ZONE
+fi
 
-# Wait for the instance to be ready for RDP
-echo "⏳ Waiting for Windows Server to initialize..."
-echo "Please run the following command periodically to check readiness:"
-echo "gcloud compute instances get-serial-port-output $VM_NAME --zone=$ZONE"
-echo "Look for the line: 'Instance setup finished. instance is ready to use.'"
+# Enable required services
+gcloud services enable run.googleapis.com
+gcloud services enable pubsub.googleapis.com
+gcloud services enable cloudbuild.googleapis.com
 
-# Prompt for setting the Windows password
-read -p "Enter your desired Windows username (e.g., admin): " WIN_USER
+# ============================
+# Task 1: Create Pub/Sub topic
+# ============================
+echo "Creating Pub/Sub topic..."
+if ! gcloud pubsub topics describe new-lab-report &>/dev/null; then
+  gcloud pubsub topics create new-lab-report
+else
+  echo "Topic new-lab-report already exists."
+fi
 
-echo "🔐 Setting/resetting Windows password for user '$WIN_USER'..."
-gcloud compute reset-windows-password $VM_NAME --zone $ZONE --user $WIN_USER
+# ============================
+# Task 2: Deploy Lab Report Service
+# ============================
+echo "Deploying Lab Report Service..."
+LAB_DIR=~/pet-theory/lab-report-service
+mkdir -p $LAB_DIR
+cd $LAB_DIR
+
+cat > package.json <<EOF
+{
+  "name": "lab-report-service",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "body-parser": "^1.20.0",
+    "@google-cloud/pubsub": "^3.0.0"
+  }
+}
+EOF
+
+cat > index.js <<'EOF'
+const express = require('express');
+const bodyParser = require('body-parser');
+const {PubSub} = require('@google-cloud/pubsub');
+const pubsub = new PubSub();
+
+const app = express();
+app.use(bodyParser.json());
+
+app.post('/', async (req, res) => {
+  const labReport = req.body;
+  const dataBuffer = Buffer.from(JSON.stringify(labReport));
+  await pubsub.topic('new-lab-report').publish(dataBuffer);
+  console.log('Lab report published to Pub/Sub.');
+  res.status(204).send();
+});
+
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => {
+  console.log(`Listening on port ${PORT}`);
+});
+EOF
+
+cat > Dockerfile <<EOF
+FROM node:18
+WORKDIR /usr/src/app
+COPY package.json ./
+RUN npm install
+COPY . .
+CMD ["npm", "start"]
+EOF
+
+cat > deploy.sh <<EOF
+gcloud builds submit --tag gcr.io/\$GOOGLE_CLOUD_PROJECT/lab-report-service
+gcloud run deploy lab-report-service \
+  --image gcr.io/\$GOOGLE_CLOUD_PROJECT/lab-report-service \
+  --platform managed \
+  --region $REGION \
+  --allow-unauthenticated \
+  --max-instances=1
+EOF
+
+chmod +x deploy.sh
+./deploy.sh
+
+# ============================
+# Task 3: Deploy Email Service
+# ============================
+echo "Deploying Email Service..."
+EMAIL_DIR=~/pet-theory/email-service
+mkdir -p $EMAIL_DIR
+cd $EMAIL_DIR
+
+cat > package.json <<EOF
+{
+  "name": "email-service",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "body-parser": "^1.20.0"
+  }
+}
+EOF
+
+cat > index.js <<'EOF'
+const express = require('express');
+const bodyParser = require('body-parser');
+
+const app = express();
+app.use(bodyParser.json());
+
+app.post('/', (req, res) => {
+  const report = JSON.parse(Buffer.from(req.body.message.data, 'base64').toString());
+  console.log(`Sending email for report ID: ${report.id}`);
+  res.status(204).send();
+});
+
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => {
+  console.log(`Email service running on port ${PORT}`);
+});
+EOF
+
+cat > Dockerfile <<EOF
+FROM node:18
+WORKDIR /usr/src/app
+COPY package.json ./
+RUN npm install
+COPY . .
+CMD ["npm", "start"]
+EOF
+
+cat > deploy.sh <<EOF
+gcloud builds submit --tag gcr.io/\$GOOGLE_CLOUD_PROJECT/email-service
+gcloud run deploy email-service \
+  --image gcr.io/\$GOOGLE_CLOUD_PROJECT/email-service \
+  --platform managed \
+  --region $REGION \
+  --no-allow-unauthenticated \
+  --max-instances=1
+EOF
+
+chmod +x deploy.sh
+./deploy.sh
+
+EMAIL_URL=$(gcloud run services describe email-service --region $REGION --format='value(status.url)')
+
+# Create service account for Pub/Sub push
+gcloud iam service-accounts create pubsub-invoker --display-name="PubSub Push Invoker"
+gcloud run services add-iam-policy-binding email-service \
+  --member=serviceAccount:pubsub-invoker@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com \
+  --role=roles/run.invoker --region $REGION
+
+gcloud pubsub subscriptions create email-sub \
+  --topic=new-lab-report \
+  --push-endpoint=$EMAIL_URL \
+  --push-auth-service-account=pubsub-invoker@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com
+
+# ============================
+# Task 4: Deploy SMS Service
+# ============================
+echo "Deploying SMS Service..."
+SMS_DIR=~/pet-theory/sms-service
+mkdir -p $SMS_DIR
+cd $SMS_DIR
+
+cat > package.json <<EOF
+{
+  "name": "sms-service",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "body-parser": "^1.20.0"
+  }
+}
+EOF
+
+cat > index.js <<'EOF'
+const express = require('express');
+const bodyParser = require('body-parser');
+
+const app = express();
+app.use(bodyParser.json());
+
+app.post('/', (req, res) => {
+  const report = JSON.parse(Buffer.from(req.body.message.data, 'base64').toString());
+  console.log(`Sending SMS for report ID: ${report.id}`);
+  res.status(204).send();
+});
+
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => {
+  console.log(`SMS service running on port ${PORT}`);
+});
+EOF
+
+cat > Dockerfile <<EOF
+FROM node:18
+WORKDIR /usr/src/app
+COPY package.json ./
+RUN npm install
+COPY . .
+CMD ["npm", "start"]
+EOF
+
+cat > deploy.sh <<EOF
+gcloud builds submit --tag gcr.io/\$GOOGLE_CLOUD_PROJECT/sms-service
+gcloud run deploy sms-service \
+  --image gcr.io/\$GOOGLE_CLOUD_PROJECT/sms-service \
+  --platform managed \
+  --region $REGION \
+  --no-allow-unauthenticated \
+  --max-instances=1
+EOF
+
+chmod +x deploy.sh
+./deploy.sh
+
+SMS_URL=$(gcloud run services describe sms-service --region $REGION --format='value(status.url)')
+
+gcloud run services add-iam-policy-binding sms-service \
+  --member=serviceAccount:pubsub-invoker@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com \
+  --role=roles/run.invoker --region $REGION
+
+gcloud pubsub subscriptions create sms-sub \
+  --topic=new-lab-report \
+  --push-endpoint=$SMS_URL \
+  --push-auth-service-account=pubsub-invoker@$GOOGLE_CLOUD_PROJECT.iam.gserviceaccount.com
 
 # Final congratulatory message with styling
+
 echo -e "\e[41;97m🎉 Congratulations for completing the Lab! 🎉 \e[0m"
+
 echo "📺 Subscribe to the channel: https://www.youtube.com/channel/UChSkWopRk1ErP2i0k4aa0KQ"
+
 
 ```
 
