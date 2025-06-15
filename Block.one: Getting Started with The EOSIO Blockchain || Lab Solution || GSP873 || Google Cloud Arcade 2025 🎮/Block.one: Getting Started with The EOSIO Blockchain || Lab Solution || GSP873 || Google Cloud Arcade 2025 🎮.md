@@ -55,6 +55,7 @@ echo "✅ VM $VM_NAME creation initiated in region $REGION, zone $ZONE using ima
 gcloud compute ssh my-vm-1 --zone ZONE
 
 ```
+```
 #!/bin/bash
 
 echo "🔄 Updating package lists..."
