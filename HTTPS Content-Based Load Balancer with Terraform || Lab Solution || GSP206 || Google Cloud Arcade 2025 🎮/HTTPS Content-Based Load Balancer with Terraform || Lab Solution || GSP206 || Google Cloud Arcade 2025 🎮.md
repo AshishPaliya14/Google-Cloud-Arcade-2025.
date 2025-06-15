@@ -7,7 +7,6 @@
 ### ⚙️ Run the Following Commands in Cloud Shell
 
 ```
-
 #!/bin/bash
 
 # Modern Color Definitions
@@ -37,7 +36,7 @@ BOX_TOP="${CYAN}╔════════════════════�
 BOX_MID="${CYAN}║                                            ║${RESET}"
 BOX_BOT="${CYAN}╚════════════════════════════════════════════╝${RESET}"
 
-# Header with Dr. Abhishek branding
+# Header 
 clear
 echo -e "${BOX_TOP}"
 echo -e "${CYAN}║               LearnWithAshish              ║${RESET}"
