@@ -1,6 +1,6 @@
 # Google-Cloud-Arcade-2025
 
-# Modular Load Balancing with Terraform - Regional Load Balancer || Lab Solution || GSP191 || Google Cloud Arcade 2025 🎮
+# HTTPS Content-Based Load Balancer with Terraform || Lab Solution || GSP206 || Google Cloud Arcade 2025 🎮
 
 ## 💡 Solution here
 
