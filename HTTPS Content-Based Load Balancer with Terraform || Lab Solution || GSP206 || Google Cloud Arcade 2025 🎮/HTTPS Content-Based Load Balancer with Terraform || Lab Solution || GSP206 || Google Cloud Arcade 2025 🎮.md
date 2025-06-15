@@ -7,29 +7,8 @@
 ### ⚙️ Run the Following Commands in Cloud Shell
 
 ```
-#!/bin/bash
-
-# Color Definitions
-BLUE='\033[0;34m'
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-RED='\033[0;31m'
-NC='\033[0m' # No Color
-BOLD='\033[1m'
-
-# Display Header
-clear
-echo -e "${BLUE}${BOLD}"
-echo "╔════════════════════════════════════════════╗"
-echo "║              LearnWithAshish               ║"
-echo "╚════════════════════════════════════════════╝"
-echo -e "${NC}"
-echo -e "${YELLOW}📺 YouTube: [[https://www.youtube.com/channel/UChSkWopRk1ErP2i0k4aa0KQ]]${NC}"
-echo -e "${YELLOW}⭐ Please Subscribe for More Cloud Tutorials! ⭐${NC}"
-echo
 
 #!/bin/bash
-
 
 # Modern Color Definitions
 BLACK=$(tput setaf 0)
@@ -136,7 +115,6 @@ echo -e "\e[41;97m🎉${WHITE}${BOLD} Congratulations for completing the Lab! �
 echo
 echo "📺 Subscribe to the channel: https://www.youtube.com/channel/UChSkWopRk1ErP2i0k4aa0KQ"
 echo
-
 
 ```
 
