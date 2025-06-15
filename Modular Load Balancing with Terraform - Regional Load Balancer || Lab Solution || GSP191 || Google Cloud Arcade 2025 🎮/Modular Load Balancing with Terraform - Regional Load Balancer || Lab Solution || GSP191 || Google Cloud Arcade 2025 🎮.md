@@ -95,16 +95,13 @@ echo
 echo -e "${BLUE}${BOLD}🚀 Step 8: Deploying Load Balancer...${NC}"
 yes | terraform apply --auto-approve
 
-# Completion Message
+
 echo
-echo -e "${GREEN}${BOLD}🎉 Congratulations for completing the Lab! 🎉"
-echo -e "${NC}"
+echo -e "\e[41;97m🎉${WHITE}${BOLD} Congratulations for completing the Lab! 🎉 \e[0m"
+echo
+echo "📺 Subscribe to the channel: https://www.youtube.com/channel/UChSkWopRk1ErP2i0k4aa0KQ"
+echo
 
-echo -e "${YELLOW}Don't forget to subscribe to my YouTube channel for more tutorials!${NC}"
-echo -e "${BLUE}[https://www.youtube.com/channel/UChSkWopRk1ErP2i0k4aa0KQ]${NC}"
-
-
-echo "📺 Subscribe to the channel: ${Red}[https://www.youtube.com/channel/UChSkWopRk1ErP2i0k4aa0KQ]"
 
 ```
 
