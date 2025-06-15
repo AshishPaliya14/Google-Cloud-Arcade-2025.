@@ -5,122 +5,135 @@
 ## 💡 Solution here
 
 ### ⚙️ Run the Following Commands in Cloud Shell
+---
+
+<div style="padding: 15px; margin: 10px 0;">
+<p><strong>>> Command for creating a VM named "my-vm-1" : </strong></p>
 
 ```
 #!/bin/bash
-# Define color variables
-
-BLACK=`tput setaf 0`
-RED=`tput setaf 1`
-GREEN=`tput setaf 2`
-YELLOW=`tput setaf 3`
-BLUE=`tput setaf 4`
-MAGENTA=`tput setaf 5`
-CYAN=`tput setaf 6`
-WHITE=`tput setaf 7`
-
-BG_BLACK=`tput setab 0`
-BG_RED=`tput setab 1`
-BG_GREEN=`tput setab 2`
-BG_YELLOW=`tput setab 3`
-BG_BLUE=`tput setab 4`
-BG_MAGENTA=`tput setab 5`
-BG_CYAN=`tput setab 6`
-BG_WHITE=`tput setab 7`
-
-BOLD=`tput bold`
-RESET=`tput sgr0`
 
 
-echo
-echo -e "${CYAN}${BOLD_TEXT}==============================================${RESET_FORMAT}"
-echo -e "${YELLOW}${BOLD_TEXT}              LearnWithAshish               ${RESET_FORMAT}"
-echo -e "${CYAN}${BOLD_TEXT}==============================================${RESET_FORMAT}"
+echo "===================================================="
+echo "                 LearnWithAshish                    "
+echo "===================================================="
 echo
 
+# Prompt user for region and zone
+read -p ">> Enter the region (e.g. us-central1): " REGION
+read -p ">> Enter the zone (e.g. us-central1-a): " ZONE
 
-echo "${YELLOW}${BOLD}Starting${RESET}" "${GREEN}${BOLD}Progress${RESET}"
+VM_NAME="my-vm-1"
+REGION="europe-west1"
+ZONE="europe-west1-b"
+MACHINE_TYPE="e2-standard-2"
+IMAGE_PROJECT="ubuntu-os-cloud"
+IMAGE_NAME="ubuntu-2404-minimal-v20240606"  # As of June 2024; adjust if newer needed
 
+# Optional: Set gcloud config defaults
+gcloud config set compute/region $REGION
+gcloud config set compute/zone $ZONE
 
-gcloud auth list
+# Create the VM instance with Ubuntu 24.04 LTS Minimal
+gcloud compute instances create $VM_NAME \
+  --zone=$ZONE \
+  --machine-type=$MACHINE_TYPE \
+  --image=$IMAGE_NAME \
+  --image-project=$IMAGE_PROJECT \
+  --boot-disk-size=10GB \
+  --boot-disk-type=pd-balanced \
+  --boot-disk-device-name=$VM_NAME
 
-export ZONE=$(gcloud compute project-info describe --format="value(commonInstanceMetadata.items[google-compute-default-zone])")
+echo "✅ VM $VM_NAME creation initiated in region $REGION, zone $ZONE using image $IMAGE_NAME."
+```
+</div>
 
-export REGION=$(gcloud compute project-info describe --format="value(commonInstanceMetadata.items[google-compute-default-region])")
+<div style="padding: 15px; margin: 10px 0;">
+<p><strong>>> Run this command after creating VM instance : </strong></p>
 
-export PROJECT_ID=$(gcloud config get-value project)
+```
+gcloud compute ssh my-vm-1 --zone ZONE
 
-gcloud config set compute/zone "$ZONE"
-gcloud config set compute/region "$REGION"
+```
+#!/bin/bash
 
-gcloud compute instances create my-vm-1 --project=$DEVSHELL_PROJECT_ID --zone=$ZONE --machine-type=e2-standard-2 --image-family=ubuntu-2004-lts --image-project=ubuntu-os-cloud --boot-disk-size=10GB --boot-disk-device-name=my-vm-1 --boot-disk-type=pd-balanced
+echo "🔄 Updating package lists..."
+sudo apt update -y
 
-
-sleep 60
-
-cat > techcps.sh <<'EOF_CP'
-
-sudo apt update
-
+echo
+echo "⬇️ Downloading EOSIO binary..."
 curl -LO https://github.com/eosio/eos/releases/download/v2.1.0/eosio_2.1.0-1-ubuntu-20.04_amd64.deb
 
+echo
+echo "💾 Installing EOSIO..."
 sudo apt install -y ./eosio_2.1.0-1-ubuntu-20.04_amd64.deb
 
+echo
+echo "✅ Verifying installation..."
 nodeos --version
-
 cleos version client
-
 keosd -v
 
+echo
+echo "🚀 Starting nodeos in background..."
 nodeos -e -p eosio --plugin eosio::chain_api_plugin --plugin eosio::history_api_plugin --contracts-console >> nodeos.log 2>&1 &
 
-tail -n 15 nodeos.log
+sleep 5
+echo
+echo "📡 nodeos is running. Showing logs..."
+tail -n 10 nodeos.log
 
+echo
+echo "💼 Creating wallet..."
 cleos wallet create --name my_wallet --file my_wallet_password
 
+echo
+echo "🔑 Viewing wallet password..."
 cat my_wallet_password
 
-export wallet_password=$(cat my_wallet_password)
-echo $wallet_password
-
+echo
+echo "🔓 Unlocking wallet..."
+wallet_password=$(cat my_wallet_password)
 cleos wallet open --name my_wallet
-
 cleos wallet unlock --name my_wallet --password $wallet_password
 
+echo
+echo "🔐 Importing EOSIO system private key..."
 cleos wallet import --name my_wallet --private-key 5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3
 
+echo
+echo "⬇️ Downloading EOSIO CDT..."
 curl -LO https://github.com/eosio/eosio.cdt/releases/download/v1.8.1/eosio.cdt_1.8.1-1-ubuntu-20.04_amd64.deb
 
+echo
+echo "💾 Installing EOSIO CDT..."
 sudo apt install -y ./eosio.cdt_1.8.1-1-ubuntu-20.04_amd64.deb
 
+echo
+echo "✅ Verifying CDT installation..."
 eosio-cpp --version
 
+echo
+echo "🧪 Unlocking wallet again to ensure access..."
 cleos wallet open --name my_wallet
-
-export wallet_password=$(cat my_wallet_password)
-echo $wallet_password
-
 cleos wallet unlock --name my_wallet --password $wallet_password
 
+echo
+echo "🔐 Creating new keypair..."
 cleos create key --file my_keypair1
-
 cat my_keypair1
 
+# Extract private key from file
 user_private_key=$(grep "Private key:" my_keypair1 | cut -d ' ' -f 3)
-
 user_public_key=$(grep "Public key:" my_keypair1 | cut -d ' ' -f 3)
 
+echo
+echo "🔐 Importing user private key..."
 cleos wallet import --name my_wallet --private-key $user_private_key
 
+echo
+echo "👤 Creating EOSIO account named 'bob' with the new public key..."
 cleos create account eosio bob $user_public_key
-
-EOF_CP
-
-
-gcloud compute scp techcps.sh my-vm-1:/tmp --project=$DEVSHELL_PROJECT_ID --zone=$ZONE --quiet
-
-gcloud compute ssh my-vm-1 --project=$DEVSHELL_PROJECT_ID --zone=$ZONE --quiet --command="bash /tmp/techcps.sh"
-
 
 echo
 echo -e "\e[41;97m🎉${WHITE}${BOLD} Congratulations for completing the Lab! 🎉 \e[0m"
