@@ -135,7 +135,7 @@ view: users {
 
 ```
 
-### 📍 Step 4 : Open order_Items.view file
+### 📍 Step 4 : Open order_items.view file
 - **Remove the default code and paste the below code:**
 ```
 view: order_items {
