@@ -7,6 +7,9 @@
 ### ⚙️ Run the Following Commands in Cloud Shell
 
 ```
+export LOCATION=
+```
+```
 #!/bin/bash
 # Define color variables
 
@@ -32,29 +35,20 @@ BOLD=`tput bold`
 RESET=`tput sgr0`
 #----------------------------------------------------start--------------------------------------------------#
 
-echo "${BG_RED}${BOLD}==========================================${RESET}"
-echo "${BG_RED}${BOLD}               LearnWithAshish            ${RESET}"
-echo "${BG_RED}${BOLD}==========================================${RESET}"
+echo "${BG_CYAN}${BOLD}==========================================${RESET}"
+echo "${BG_CYAN}${BOLD}               LearnWithAshish            ${RESET}"
+echo "${BG_CYAN}${BOLD}==========================================${RESET}"
 
-echo
-echo "${BG_MAGENTA}${BOLD}... Starting Execution ...${RESET}"
-
-gcloud config set compute/zone $ZONE
-
+gcloud auth list
+gcloud config set compute/zone $LOCATION
 git clone https://github.com/GoogleCloudPlatform/continuous-deployment-on-kubernetes.git
-
 cd continuous-deployment-on-kubernetes
-
 gcloud container clusters create jenkins-cd \
 --num-nodes 2 \
 --scopes "https://www.googleapis.com/auth/projecthosting,cloud-platform"
-
 gcloud container clusters get-credentials jenkins-cd
-
 helm repo add jenkins https://charts.jenkins.io
-
 helm repo update
-
 helm upgrade --install -f jenkins/values.yaml myjenkins jenkins/jenkins
 
 echo
