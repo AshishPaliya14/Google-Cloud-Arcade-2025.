@@ -43,11 +43,11 @@ npm install @google-cloud/firestore
 
 npm install @google-cloud/logging
 
-curl -s https://raw.githubusercontent.com/AshishPaliya14/Google-Cloud-Arcade-2025./refs/heads/main/firestore-lab/importTestData.js
+curl https://raw.githubusercontent.com/Arcade-helper/Solutions/main/Importing%20Data%20to%20a%20Firestore%20Database/importTestData.js > importTestData.js
 
 npm install faker@5.5.3
 
-curl -s https://raw.githubusercontent.com/AshishPaliya14/Google-Cloud-Arcade-2025./refs/heads/main/firestore-lab/createTestData.js
+curl https://raw.githubusercontent.com/Arcade-helper/Solutions/main/Importing%20Data%20to%20a%20Firestore%20Database/createTestData.js > createTestData.js
 
 node createTestData 1000
 
