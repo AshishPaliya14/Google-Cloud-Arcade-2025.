@@ -27,7 +27,9 @@ The Google Cloud Arcade 2025 is a gamified learning challenge where participants
 • https://youtube.com/playlist?list=PL9Ixn_ubFk0-VFTMJzy2f3S1qEOYPPTlu&si=ck3qY8418cDl3UCQ  <br>
 • https://www.youtube.com/playlist?list=PL9Ixn_ubFk0-HQdWmiiwwZvvUJIEp22Fk   <br>
 • https://www.youtube.com/playlist?list=PL9Ixn_ubFk08XoXa4B23REBq1RzhUSgxH   <br>
-• https://www.youtube.com/playlist?list=PL9Ixn_ubFk08_2N0tyTGrzMt4POmPXuSk
+• https://www.youtube.com/playlist?list=PL9Ixn_ubFk08_2N0tyTGrzMt4POmPXuSk   <br>
+• https://www.youtube.com/playlist?list=PL9Ixn_ubFk0-KMsmCRm0cBfXAdp0_9vO4   <br>
+• https://www.youtube.com/playlist?list=PL9Ixn_ubFk08D3wj2POSH1qTs5g2-Ct9A   <br>
 
 
 ## 🔥 Channels to Follow for More:
